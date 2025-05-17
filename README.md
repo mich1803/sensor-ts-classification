@@ -33,10 +33,10 @@ dataset/
 │   ├── explaining.ipynb
 │   └── utils.py
 │
-├── RBF_approach/               # Approximation of full time series using RBFs
-│   ├── preprocessing.ipynb
-│   ├── training.ipynb
-│   └── utils.py
+└── RBF_approach/               # Approximation of full time series using RBFs
+    ├── preprocessing.ipynb
+    ├── training.ipynb
+    └── utils.py
 ```
 
 

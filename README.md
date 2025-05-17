@@ -17,17 +17,17 @@ The classification task is to predict the substance present in a given experimen
 ```bash 
 sensor-ts-classification/
 │
-├── dataset/                    # Private
+├── dataset/                                # Private
 │
-├── instant_approach/           # Models trained on individual time steps (1×16 vectors)
-│   ├── preprocessing.ipynb     # Data filtering and preparation
-│   ├── training.ipynb          # Model training notebook
-│   ├── training_evaluating_binary.ipynb  # ETHANOL vs. ACETONE experiment
-│   ├── evaluating.ipynb        # Test and inference
-│   ├── explaining.ipynb        # Sample importance in time series
+├── instant_approach/                       # Models trained on individual time steps (1×16 vectors)
+│   ├── preprocessing.ipynb                 # Data filtering and preparation
+│   ├── training.ipynb                      # Model training notebook
+│   ├── training_evaluating_binary.ipynb    # ETHANOL vs. ACETONE experiment
+│   ├── evaluating.ipynb                    # Test and inference
+│   ├── explaining.ipynb                    # Sample importance in time series
 │   └── utils.py
 │
-├── time_windows_approach/      # Models trained on 100×16 time window slices
+├── time_windows_approach/                  # Models trained on 100×16 time window slices
 │   ├── preprocessing.ipynb
 │   ├── training.ipynb
 │   ├── training_evaluating_binary.ipynb
@@ -35,7 +35,7 @@ sensor-ts-classification/
 │   ├── explaining.ipynb
 │   └── utils.py
 │
-└── RBF_approach/               # Approximation of full time series using RBFs
+└── RBF_approach/                           # Approximation of full time series using RBFs
     ├── preprocessing.ipynb
     ├── training.ipynb
     └── utils.py

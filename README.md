@@ -15,7 +15,9 @@ The classification task is to predict the substance present in a given experimen
 ## 📁 Project Structure
 
 ```bash 
-dataset/
+sensor-ts-classification/
+│
+├── dataset/                    # Private
 │
 ├── instant_approach/           # Models trained on individual time steps (1×16 vectors)
 │   ├── preprocessing.ipynb     # Data filtering and preparation

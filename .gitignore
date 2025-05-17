@@ -1,2 +1,7 @@
 dataset
 venv
+idee.txt
+*/splits/
+*/models/
+*/lightning_logs/
+*.csv

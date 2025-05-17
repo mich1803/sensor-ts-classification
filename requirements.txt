@@ -5,3 +5,7 @@ seaborn
 matplotlib
 numpy
 openpyxl
+plotly
+torch
+torchvision
+pytorch-lightning

@@ -53,4 +53,4 @@ sensor-ts-classification/
 
 - **Time Windows**: Includes MLPs, CNNs, and Encoders with/without column attention (CSE).
 - **Instant Time**: Simpler MLP and encoder-based models to study classification without temporal context.
-- **RBF Approach**: Fits basis functions to entire experiment signals and uses the resulting features for classification (not described in the report, but included in this repo).
+- **RBF Approach**: Fits basis functions to entire experiment signals and uses the resulting features for classification.

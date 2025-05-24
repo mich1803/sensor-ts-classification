@@ -291,6 +291,93 @@ class EncoderMLPClassifier(pl.LightningModule):
             weight_decay=self.hparams.weight_decay
         )
 
+class RNNClassifier(pl.LightningModule):
+    def __init__(
+        self,
+        input_dim=16,
+        hidden_dim=64,
+        output_dim=17,
+        rnn_type="GRU",  # "RNN", "LSTM", "GRU"
+        lr=1e-4,
+        weight_decay=1e-5,
+        dropout=0.2,
+        num_layers=1,
+    ):
+        super().__init__()
+        self.save_hyperparameters()
+
+        rnn_class = {"RNN": nn.RNN, "LSTM": nn.LSTM, "GRU": nn.GRU}[rnn_type]
+
+        self.rnn = rnn_class(
+            input_size=input_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0,
+        )
+        self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+        self.loss_fn = nn.CrossEntropyLoss()
+        self.test_preds = []
+        self.test_targets = []
+
+    def forward(self, x):
+        # x shape: (batch_size, sequence_len, input_dim)
+        rnn_out, _ = self.rnn(x)
+        last_hidden = rnn_out[:, -1, :]  # Take the last time step
+        out = self.fc(self.dropout(last_hidden))
+        return out
+
+    def training_step(self, batch, batch_idx):
+        x, y, _ = batch
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        acc = (logits.argmax(dim=1) == y).float().mean()
+        self.log("train_loss", loss, prog_bar=True)
+        self.log("train_acc", acc, prog_bar=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y, _ = batch
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        acc = (logits.argmax(dim=1) == y).float().mean()
+        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_acc", acc, prog_bar=True)
+
+    def test_step(self, batch, batch_idx):
+        x, y, _ = batch
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        preds = logits.argmax(dim=1)
+
+        acc = (preds == y).float().mean()
+        self.log("test_loss", loss, prog_bar=True)
+        self.log("test_acc", acc, prog_bar=True)
+
+        self.test_preds.append(preds.cpu())
+        self.test_targets.append(y.cpu())
+
+    def on_test_epoch_end(self):
+        preds = torch.cat(self.test_preds)
+        targets = torch.cat(self.test_targets)
+
+        cm = confusion_matrix(targets, preds)
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax)
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("True")
+        ax.set_title("Confusion Matrix")
+        plt.show()
+        plt.close(fig)
+
+        self.log("final_test_acc", (preds == targets).float().mean())
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(
+            self.parameters(), lr=self.hparams.lr, weight_decay=self.hparams.weight_decay
+        )
+
 
 class MLPClassifier(pl.LightningModule):
     def __init__(self, num_features, window_size, hidden_dim, num_classes,
@@ -440,6 +527,8 @@ def get_stats(model_path, dataloader, num_classes, device="cuda" if torch.cuda.i
             model = CSEncoderMLPClassifier.load_from_checkpoint(model_path)
         elif model_type == "CNN":
             model = CNNClassifier.load_from_checkpoint(model_path)
+        elif model_type == "RNN":
+            model = RNNClassifier.load_from_checkpoint(model_path)
         else:
             raise ValueError(f"Unknown model type: {model_type}")
     except Exception as e:

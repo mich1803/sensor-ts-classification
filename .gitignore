@@ -5,3 +5,4 @@ idee.txt
 */models/
 */lightning_logs/
 *.csv
+*/__pycache__/

@@ -1,56 +1,80 @@
 # 🧪 Sensor Signal Classification – ML for Real-World Time Series
 
-This repository explores **machine learning approaches for classifying sensor-based time series data** collected from real-world experiments involving different chemical substances.
+This repository explores **machine learning approaches for classifying multivariate time series data** collected from real-world sensor experiments involving different chemical substances, provided by [Sensichips S.r.l.](https://www.sensichips.com/).
 
-## 📌 Task Overview
+## 📌 Problem Overview
 
-The dataset consists of multiple experiments, each represented as a multivariate time series with **16 sensor measurements over time** and labeled with one of **17 target substances**. Each experiment varies in length and quality.
+Each experiment consists of a variable-length time series with **16 sensor channels**, capturing diverse signal behaviors under different environmental and chemical conditions. The task is to classify each experiment into one of **17 chemical classes**.
 
-The classification task is to predict the substance present in a given experiment, using different preprocessing and modeling strategies:
+To tackle this challenge, the project investigates multiple modeling strategies with different levels of temporal abstraction:
 
-- **Time Window Approach**: Split experiments into fixed-length time windows (e.g. 100×16) to capture short-term dynamics.
-- **Instant Time Approach**: Use each individual time point (1×16 vector) as an independent sample.
-- **RBF Approximation Approach**: Approximate the entire time series with Radial Basis Functions (RBFs) and use this compact representation for classification.
+- **🧩 Instant Time Approach**: Classify each individual time step as a standalone 1×16 feature vector.
+- **📐 Time Window Approach**: Use fixed-length slices of 100×16 to incorporate short-term temporal dynamics.
+- **🎯 RBF Approximation**: Compress entire time series into Radial Basis Function (RBF) coefficients and classify in a low-dimensional space.
+- **🔁 Temporal Processing (RNN)**: Leverage recurrent neural architectures (GRU, LSTM) to process the entire sequence with variable length for global temporal encoding.
+
+---
 
 ## 📁 Project Structure
 
-```bash 
+```bash
 sensor-ts-classification/
 │
-├── dataset/                                # Private
+├── docs/
+│   ├── report_ita.pdf                      # Final thesis in Italian 🇮🇹
+│   └── report_eng.pdf                      # [English version of the thesis](docs/report_eng.pdf) 🇬🇧
 │
-├── instant_approach/                       # Models trained on individual time steps (1×16 vectors)
-│   ├── preprocessing.ipynb                 # Data filtering and preparation
-│   ├── training.ipynb                      # Model training notebook
-│   ├── training_evaluating_binary.ipynb    # ETHANOL vs. ACETONE experiment
-│   ├── evaluating.ipynb                    # Test and inference
-│   ├── explaining.ipynb                    # Sample importance in time series
-│   └── utils.py
-│
-├── time_windows_approach/                  # Models trained on 100×16 time window slices
+├── instant_approach/                      # Models on isolated 1×16 time steps
 │   ├── preprocessing.ipynb
 │   ├── training.ipynb
-│   ├── training_evaluating_binary.ipynb
 │   ├── evaluating.ipynb
 │   ├── explaining.ipynb
+│   └── training_evaluating_binary.ipynb
+│
+├── time_windows_approach/                 # Models on 100×16 windows with attention/encoders
+│   ├── preprocessing.ipynb
+│   ├── training.ipynb
+│   ├── evaluating.ipynb
+│   ├── explaining.ipynb
+│   └── training_evaluating_binary.ipynb
+│
+├── RBF_approach/                          # Time series compression with RBF coefficients
+│   ├── preprocessing.ipynb
+│   ├── training.ipynb
+│   └── rbf_features.csv
+│
+├── RNN_approach/                          # Sequence-level classification with GRU/LSTM
+│   ├── training.ipynb
 │   └── utils.py
 │
-└── RBF_approach/                           # Approximation of full time series using RBFs
-    ├── preprocessing.ipynb
-    ├── training.ipynb
-    └── utils.py
+└── data_analysis.ipynb                     
+
 ```
 
+---
 
 ## 🛠️ Implementation Notes
 
-- All models are implemented using **PyTorch Lightning**.
-- Each subdirectory is self-contained, with its own preprocessing and training notebooks.
-- Preprocessing involves filtering for valid experiments (e.g. ≥200 rows) and substances with enough samples.
-- Train/Val/Test splits are performed **per experiment**, preserving the sequential structure.
+- Implemented in **PyTorch Lightning** for modular training, evaluation, and logging.
+- Each approach directory contains independent preprocessing, training, and evaluation code.
+- Data filtering excludes experiments with fewer than 200 time steps.
+- Train/validation/test splits are done per-experiment to maintain time coherence and prevent data leakage.
 
-## 🧬 Modeling Highlights
+---
 
-- **Time Windows**: Includes MLPs, CNNs, and Encoders with/without column attention (CSE).
-- **Instant Time**: Simpler MLP and encoder-based models to study classification without temporal context.
-- **RBF Approach**: Fits basis functions to entire experiment signals and uses the resulting features for classification.
+## 📊 Modeling Summary
+
+| Approach                | Input Shape        | Models Used                        |
+|------------------------|--------------------|------------------------------------|
+| Instant Time           | 1×16               | MLP, Encoder MLP                   |
+| Time Window            | 100×16             | MLP, CNN, Encoder, CSE             |
+| RBF Approximation      | RBF Coeffs (16×k)  | MLP, Random Forest                 |
+| Temporal (RNN)         | Variable × 16      | GRU, LSTM                          |
+
+---
+
+## 📄 Read the Full Thesis
+
+📘 [Read the full thesis in English (PDF)](docs/report_eng.pdf)
+
+

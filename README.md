@@ -1,6 +1,6 @@
 # 🧪 Sensor Signal Classification – ML for Real-World Time Series
 
-This repository explores **machine learning approaches for classifying multivariate time series data** collected from real-world sensor experiments involving different chemical substances, provided by [Sensichips S.r.l.](https://www.sensichips.com/).
+This repository explores **machine learning approaches for classifying multivariate time series data** collected from real-world sensor experiments involving different chemical substances.
 
 ## 📌 Problem Overview
 

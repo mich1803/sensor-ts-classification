@@ -432,7 +432,7 @@ class MLPClassifier(pl.LightningModule):
             weight_decay=self.hparams.weight_decay
         )
 
-class CNNClassifier(pl.LightningModule):
+class CNN2DClassifier(pl.LightningModule):
     def __init__(self, num_features, window_size, hidden_dim, num_classes, new_channels=4,
                  kernel_size = 2, lr=1e-3, dropout=0.3, weight_decay=1e-4):
         super().__init__()
@@ -498,6 +498,74 @@ class CNNClassifier(pl.LightningModule):
         )
 
 
+class CNN1DClassifier(pl.LightningModule):
+    def __init__(self, num_features, window_size, hidden_dim, num_classes,
+                 out_channels=4, kernel_size=2, lr=1e-3, dropout=0.3, weight_decay=1e-4):
+        super().__init__()
+        self.save_hyperparameters()
+
+        # Input shape: (batch_size, window_size, num_features)
+        # Conv1D expects: (batch_size, num_features, window_size)
+        self.cnn = nn.Sequential(
+            nn.Conv1d(in_channels=num_features, out_channels=out_channels, kernel_size=kernel_size),
+            nn.ReLU(),
+            nn.Dropout(dropout)
+        )
+
+        # Calcolo della dimensione in output della CNN per determinare l'input del Linear
+        dummy_input = torch.zeros(1, num_features, window_size)
+        conv_output_dim = self.cnn(dummy_input).view(1, -1).size(1)
+
+        self.fc = nn.Sequential(
+            nn.Linear(conv_output_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, num_classes)
+        )
+
+        self.loss_fn = nn.CrossEntropyLoss()
+
+    def forward(self, x):
+        # x: (B, window_size, num_features) -> (B, num_features, window_size)
+        x = x.transpose(1, 2)
+        x = self.cnn(x)
+        x = x.view(x.size(0), -1)
+        return self.fc(x)
+
+    def training_step(self, batch, batch_idx):
+        x, y, _ = batch
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        acc = (logits.argmax(dim=1) == y).float().mean()
+        self.log("train_loss", loss, prog_bar=True, batch_size=len(x))
+        self.log("train_acc", acc, prog_bar=True, batch_size=len(x))
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y, _ = batch
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        acc = (logits.argmax(dim=1) == y).float().mean()
+        self.log("val_loss", loss, prog_bar=True, batch_size=len(x))
+        self.log("val_acc", acc, prog_bar=True, batch_size=len(x))
+
+    def test_step(self, batch, batch_idx):
+        x, y, _ = batch
+        logits = self(x)
+        loss = self.loss_fn(logits, y)
+        acc = (logits.argmax(dim=1) == y).float().mean()
+        self.log("test_loss", loss, prog_bar=True, batch_size=len(x))
+        self.log("test_acc", acc, prog_bar=True, batch_size=len(x))
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(
+            self.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay
+        )
+
+
+
 def get_stats(model_path, dataloader, num_classes, device="cuda" if torch.cuda.is_available() else "cpu"):
     """
     Loads a model and computes confusion matrix and experiment-level statistics using a DataLoader.
@@ -525,8 +593,10 @@ def get_stats(model_path, dataloader, num_classes, device="cuda" if torch.cuda.i
             model = EncoderMLPClassifier.load_from_checkpoint(model_path)
         elif model_type == "CSEMLP":
             model = CSEncoderMLPClassifier.load_from_checkpoint(model_path)
-        elif model_type == "CNN":
-            model = CNNClassifier.load_from_checkpoint(model_path)
+        elif model_type == "CNN2D":
+            model = CNN2DClassifier.load_from_checkpoint(model_path)
+        elif model_type == "CNN1D":
+            model = CNN1DClassifier.load_from_checkpoint(model_path)
         elif model_type == "RNN":
             model = RNNClassifier.load_from_checkpoint(model_path)
         else:

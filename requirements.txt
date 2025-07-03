@@ -9,3 +9,4 @@ plotly
 torch
 torchvision
 pytorch-lightning
+torchsummary

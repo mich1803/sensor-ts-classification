@@ -500,19 +500,27 @@ class CNN2DClassifier(pl.LightningModule):
 
 class CNN1DClassifier(pl.LightningModule):
     def __init__(self, num_features, window_size, hidden_dim, num_classes,
-                 out_channels=4, kernel_size=2, lr=1e-3, dropout=0.3, weight_decay=1e-4):
+                 out_channels=[32, 64], kernel_size=3, lr=1e-3, dropout=0.3, weight_decay=1e-4):
         super().__init__()
         self.save_hyperparameters()
 
-        # Input shape: (batch_size, window_size, num_features)
-        # Conv1D expects: (batch_size, num_features, window_size)
-        self.cnn = nn.Sequential(
-            nn.Conv1d(in_channels=num_features, out_channels=out_channels, kernel_size=kernel_size),
-            nn.ReLU(),
-            nn.Dropout(dropout)
-        )
+        assert isinstance(out_channels, list) and len(out_channels) >= 1, \
+            "out_channels must be a list with at least one element"
 
-        # Calcolo della dimensione in output della CNN per determinare l'input del Linear
+        cnn_layers = []
+
+        # First conv layer: input channels = num_features
+        in_ch = num_features
+        for out_ch in out_channels:
+            cnn_layers.append(nn.Conv1d(in_channels=in_ch, out_channels=out_ch, kernel_size=kernel_size))
+            cnn_layers.append(nn.ReLU())
+            cnn_layers.append(nn.MaxPool1d(kernel_size=2))
+            cnn_layers.append(nn.Dropout(dropout))
+            in_ch = out_ch  # Set input of next layer to current output
+
+        self.cnn = nn.Sequential(*cnn_layers)
+
+        # Determine the output size for the fully connected layer
         dummy_input = torch.zeros(1, num_features, window_size)
         conv_output_dim = self.cnn(dummy_input).view(1, -1).size(1)
 
@@ -526,8 +534,7 @@ class CNN1DClassifier(pl.LightningModule):
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, x):
-        # x: (B, window_size, num_features) -> (B, num_features, window_size)
-        x = x.transpose(1, 2)
+        x = x.transpose(1, 2)  # (B, num_features, window_size)
         x = self.cnn(x)
         x = x.view(x.size(0), -1)
         return self.fc(x)
